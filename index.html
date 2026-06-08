@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>เข้าสู่ระบบพนักงาน - R.X. HR Portal</title>
+
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+
+  <!-- Kanit Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent; 
+    }
+
+    :root {
+      --green:       #06C755;
+      --green-dark:  #04A844;
+      --green-light: #34D399;
+      --green-soft:  rgba(6, 199, 85, 0.08);
+      --text:        #0F172A;
+      --text-sub:    #475569;
+      --text-hint:   #94A3B8;
+      --bg:          #F8FAFC; 
+      --surface:     rgba(255, 255, 255, 0.85);
+      --border:      rgba(226, 232, 240, 0.8);
+      --error-bg:    rgba(254, 242, 242, 0.9);
+      --error-bd:    rgba(254, 202, 202, 0.8);
+      --error-text:  #EF4444;
+      --radius:      24px;
+      --radius-sm:   14px;
+    }
+
+    html {
+      background: var(--bg);
+      overflow-y: auto;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(6, 199, 85, 0.08) 0%, transparent 45%),
+                  radial-gradient(circle at 90% 80%, rgba(52, 211, 153, 0.08) 0%, transparent 45%),
+                  #F8FAFC;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 32px);
+      -webkit-font-smoothing: antialiased;
+      color: var(--text);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 390px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .err {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--error-bg);
+      border: 1.5px solid var(--error-bd);
+      border-radius: var(--radius);
+      padding: 18px;
+      font-size: 14px;
+      color: var(--error-text);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.1);
+      animation: shake .4s cubic-bezier(.36,.07,.19,.97) both;
+      line-height: 1.6;
+    }
+    .err.show { display: flex; }
+    
+    .err-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+    .err-title-wrap svg { 
+      width: 20px; 
+      height: 20px; 
+      stroke: var(--error-text); 
+      fill: none; 
+      flex-shrink: 0; 
+    }
+    
+    .err-details {
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: 'Fira Code', monospace, sans-serif;
+      font-size: 11px;
+      max-height: 110px;
+      overflow-y: auto;
+      word-break: break-all;
+      border: 1px dashed rgba(239, 68, 68, 0.2);
+      color: var(--text-sub);
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    .card {
+      width: 100%;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05),
+                  0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+      animation: rise .5s cubic-bezier(.21, 1.02, .43, 1.01) both;
+      overflow: hidden;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(30px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .hd {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      padding: 36px 24px 28px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hd::before {
+      content: '';
+      position: absolute; 
+      inset: 0;
+      background: radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .logo {
+      width: 60px; 
+      height: 60px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 18px;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      margin: 0 auto 14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      animation: float 4s ease-in-out infinite;
+    }
+    .logo svg { width: 30px; height: 30px; fill: #fff; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .hd h1 { 
+      font-size: 22px; 
+      font-weight: 600; 
+      color: #fff; 
+      letter-spacing: -0.5px;
+    }
+    .hd p { 
+      font-size: 13px; 
+      color: rgba(255, 255, 255, 0.85); 
+      margin-top: 6px; 
+      font-weight: 300; 
+    }
+
+    .body { padding: 28px 24px; }
+    .field { margin-bottom: 20px; }
+    
+    label { 
+      display: block; 
+      font-size: 13px; 
+      font-weight: 500; 
+      color: var(--text-sub); 
+      margin-bottom: 8px; 
+      letter-spacing: 0.2px; 
+    }
+
+    .inp-wrap { position: relative; }
+
+    .inp-wrap .ico {
+      position: absolute; 
+      left: 16px; 
+      top: 50%; 
+      transform: translateY(-50%);
+      width: 20px; 
+      height: 20px; 
+      stroke: var(--text-hint); 
+      fill: none;
+      stroke-width: 1.8; 
+      transition: stroke 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    input[type=text],
+    input[type=password] {
+      width: 100%;
+      padding: 15px 16px 15px 48px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--text);
+      background: rgba(248, 250, 252, 0.6);
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.25s, box-shadow 0.25s, background-color 0.25s;
+    }
+
+    input:focus {
+      border-color: var(--green);
+      background-color: #fff;
+      box-shadow: 0 0 0 4px rgba(6, 199, 85, 0.12);
+    }
+
+    .inp-wrap:focus-within .ico { stroke: var(--green); }
+
+    .eye {
+      position: absolute; 
+      right: 14px; 
+      top: 50%; 
+      transform: translateY(-50%);
+      background: none; 
+      border: none; 
+      cursor: pointer; 
+      padding: 6px;
+      color: var(--text-hint); 
+      display: flex; 
+      align-items: center;
+      transition: color 0.25s; 
+      -webkit-appearance: none;
+      min-width: 44px; 
+      min-height: 44px; 
+      justify-content: center;
+    }
+    .eye:hover { color: var(--text-sub); }
+    .eye svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+    .btn {
+      width: 100%; 
+      padding: 16px;
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      color: #fff; 
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit; 
+      font-size: 16px; 
+      font-weight: 600;
+      cursor: pointer; 
+      margin-top: 10px;
+      box-shadow: 0 10px 20px -5px rgba(6, 199, 85, 0.25);
+      transition: background 0.25s, transform 0.1s, box-shadow 0.25s;
+      -webkit-appearance: none;
+      touch-action: manipulation;
+    }
+    .btn:hover { 
+      box-shadow: 0 12px 24px -5px rgba(6, 199, 85, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn:disabled { 
+      background: #CBD5E1; 
+      box-shadow: none;
+      cursor: not-allowed; 
+      transform: none;
+    }
+
+    .btn .spin {
+      display: none; 
+      width: 22px; 
+      height: 22px;
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff; 
+      border-radius: 50%;
+      animation: rot .65s linear infinite;
+      margin: 0 auto;
+    }
+    .btn.loading .lbl  { display: none; }
+    .btn.loading .spin { display: block; }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* Success Screen */
+    .success {
+      display: none; 
+      flex-direction: column;
+      align-items: center; 
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .success.show { display: flex; }
+    .body.hide { display: none; }
+
+    .tick {
+      width: 72px; 
+      height: 72px;
+      background: var(--green-soft);
+      border-radius: 50%;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      margin-bottom: 20px;
+      border: 1px solid rgba(6, 199, 85, 0.15);
+      animation: pop .45s cubic-bezier(.34, 1.56, .64, 1) both;
+    }
+    .tick svg { 
+      width: 36px; 
+      height: 36px; 
+      stroke: var(--green); 
+      fill: none; 
+      stroke-width: 2.5; 
+      stroke-linecap: round; 
+      stroke-linejoin: round; 
+    }
+    @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .success h2 { 
+      font-size: 20px; 
+      font-weight: 600; 
+      margin-bottom: 10px; 
+      color: var(--text);
+    }
+    .success p { 
+      font-size: 14px; 
+      color: var(--text-sub); 
+      line-height: 1.6; 
+      font-weight: 300;
+    }
+
+    .foot {
+      font-size: 12px; 
+      color: var(--text-hint);
+      text-align: center; 
+      margin-top: 10px;
+      line-height: 1.6;
+      font-weight: 300;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- กล่องแสดงสถานะข้อผิดพลาด -->
+  <div class="err" id="errBox">
+    <div class="err-title-wrap">
+      <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span id="errBrief">กำลังดึงพารามิเตอร์ตรวจสอบสิทธิ์...</span>
+    </div>
+    <div class="err-details" id="errDetails">
+      กรุณารอการเชื่อมต่อสักครู่นะคะ
+    </div>
+  </div>
+
+  <!-- CARD ฟอร์มล็อกอิน -->
+  <div class="card">
+
+    <div class="hd">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2zm-2 10H6V10h12v2zm0-4H6V6h12v2z"/></svg>
+      </div>
+      <h1>เข้าสู่ระบบพนักงาน</h1>
+      <p>ยืนยันสิทธิ์เพื่อความปลอดภัยในการเข้าใช้พอร์ทัล R.X.</p>
+    </div>
+
+    <!-- FORM INPUTS -->
+    <div class="body" id="formBody">
+      <div class="field">
+        <label for="username">รหัสพนักงาน (Username)</label>
+        <div class="inp-wrap">
+          <input type="text" id="username" placeholder="กรอกรหัสพนักงานของคุณ"
+                 autocomplete="username" autocapitalize="none" spellcheck="false">
+          <svg class="ico" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">รหัสผ่าน (Password)</label>
+        <div class="inp-wrap">
+          <input type="password" id="password" placeholder="กรอกรหัสผ่านของคุณ"
+                 autocomplete="current-password">
+          <svg class="ico" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <button class="eye" id="eyeBtn" type="button" onclick="togglePw()" aria-label="แสดง/ซ่อนรหัสผ่าน">
+            <svg id="eyeIco" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn" id="loginBtn" onclick="doLogin()">
+        <span class="lbl">ลงชื่อเข้าใช้งาน</span>
+        <div class="spin"></div>
+      </button>
+    </div>
+
+    <!-- SUCCESS SCREEN -->
+    <div class="success" id="successBox">
+      <div class="tick">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>เข้าสู่ระบบสำเร็จแล้วค่ะ!</h2>
+      <p id="successName">กำลังปิดหน้าต่างยืนยันสิทธิ์นี้เพื่อพาคุณกลับห้องแชตคู่สนทนา...</p>
+    </div>
+
+  </div>
+
+  <p class="foot">พอร์ทัลยืนยันตัวตนพนักงานบริษัท อาร์เอ็กซ์ จำกัด</p>
+</div>
+
+<script>
+  // ── CONFIG ──
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxQcD8ZauIyuh6yWVOmTyVEKw14lkNp3bfLug7WnhdvXBuNeacDAhtOJGm7vf57VACZ/exec';
+  const LIFF_ID = '....';
+
+  let lineUserId = null;
+
+  (async () => {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+
+      if (liff.isInClient()) {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        const profile = await liff.getProfile();
+        lineUserId = profile.userId;
+        hideErr(); 
+      } else {
+        console.log('External Browser detected. Bypassing automatic redirect.');
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          lineUserId = profile.userId;
+          hideErr();
+        } else {
+          showErr(
+            '💡 คำแนะนำในการเข้าใช้งาน', 
+            'เพื่อประสิทธิภาพสูงสุดและการเปลี่ยนแถบปุ่มเมนูบนมือถือจริง แนะนำให้เปิดผ่านห้องแชต LINE โดยตรงนะคะ แต่ท่านยังคงสามารถล็อกอินเพื่อส่งความจำบันทึกสถิติที่นี่ได้ค่ะ'
+          );
+        }
+      }
+    } catch (err) {
+      console.error('LIFF init failed:', err);
+      showErr(
+        '🔧 ระบบตรวจสอบความปลอดภัยภายใน', 
+        'เปิดเข้าใช้ระบบแนะแนวภายนอกเรียบร้อยค่ะ ท่านสามารถพิมพ์สลักข้อมูลพนักงานเพื่อเข้าทดสอบความปลอดภัยได้ตามปกติค่ะ'
+      );
+    }
+  })();
+
+  async function doLogin() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+
+    if (!user) { showErr('ระบุข้อมูลไม่ครบ', 'กรุณาระบุ Username รหัสพนักงานด้วยนะคะ'); return; }
+    if (!pass) { showErr('ระบุข้อมูลไม่ครบ', 'กรุณาระบุ Password รหัสเข้าใช้งานด้วยนะคะ'); return; }
+    
+    const finalUid = lineUserId || "TEST_EXTERNAL_USER_" + user;
+
+    hideErr();
+    setLoading(true);
+
+    try {
+      const res = await fetch(GAS_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body:    JSON.stringify({ action: 'login', username: user, password: pass, lineUserId: finalUid }),
+      });
+      
+      const responseText = await res.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonErr) {
+        showErr('การตอบกลับจากเซิร์ฟเวอร์ขัดข้อง', responseText);
+        setLoading(false);
+        return;
+      }
+
+      if (data.success) {
+        if (data.warning) {
+          showErr('สลับริชเมนูไม่สำเร็จ (แต่เข้าระบบแล้ว)', data.warning + ' (กรุณาถ่ายภาพหน้าจอนี้แจ้งผู้ดูแลระบบเพื่อทำการอัปสิทธิ์บน Google Apps Script ค่ะ)');
+          setLoading(false);
+          setTimeout(() => { if (liff.isInClient()) liff.closeWindow(); }, 7000);
+        } else {
+          showSuccess(data.name || user);
+          setTimeout(() => {
+            if (liff.isInClient()) {
+              liff.closeWindow();
+            } else {
+              showErr('ยืนยันตัวตนสำเร็จลุล่วง!', 'บันทึกประวัติพนักงานเข้าสู่ความทรงจำเรียบร้อย เนื่องจากพนักงานเปิดใช้ผ่านเบราว์เซอร์ภายนอก แนะนำให้ปิดหน้าจอเว็บบนเบราว์เซอร์นี้แล้วกลับไปแชตต่อใน LINE ได้ทันทีเลยนะคะ!');
+            }
+          }, 2000);
+        }
+      } else {
+        showErr('เข้าสู่ระบบไม่สำเร็จ', data.message || 'ข้อมูลชื่อผู้ใช้หรือรหัสผ่านไม่สอดคล้องกับพนักงาน R.X. ค่ะ');
+      }
+    } catch (err) {
+      showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์หลังบ้านได้', 'โปรดตรวจสอบความถูกต้องของ GAS_URL และตรวจสอบสิทธิ์การแชร์ Deployment ใน Google Sheets หลังบ้านนะคะ');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  document.addEventListener('keydown', e => { 
+    if (e.key === 'Enter') doLogin(); 
+  });
+
+  function setLoading(on) {
+    const b = document.getElementById('loginBtn');
+    b.classList.toggle('loading', on);
+    b.disabled = on;
+  }
+
+  function showErr(brief, details) {
+    document.getElementById('errBrief').textContent = brief;
+    document.getElementById('errDetails').textContent = details;
+    document.getElementById('errBox').classList.add('show');
+    
+    const errBox = document.getElementById('errBox');
+    errBox.style.animation = 'none';
+    errBox.offsetHeight; 
+    errBox.style.animation = null;
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function hideErr() {
+    document.getElementById('errBox').classList.remove('show');
+  }
+
+  function showSuccess(name) {
+    document.getElementById('formBody').classList.add('hide');
+    document.getElementById('successName').innerHTML = 'ยินดีต้อนรับ คุณ <strong>' + name + '</strong><br>เข้าสู่ระบบเรียบร้อยแล้ว กำลังพาคุณกลับห้องแชตฝ่ายบุคคล...';
+    document.getElementById('successBox').classList.add('show');
+  }
+
+  function togglePw() {
+    const inp  = document.getElementById('password');
+    const ico  = document.getElementById('eyeIco');
+    const show = inp.type === 'password';
+    inp.type   = show ? 'text' : 'password';
+    ico.innerHTML = show
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+</script>
+</body>
+</html>
